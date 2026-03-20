@@ -13,5 +13,6 @@ dependencies = [
     "pydantic[email]>=2.12.5",
     "pytest>=9.0.2",
     "python-dotenv>=1.2.2",
+    "python-jose[cryptography]>=3.5.0",
     "sqlalchemy>=2.0.48",
 ]

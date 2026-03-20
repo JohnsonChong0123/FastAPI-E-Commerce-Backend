@@ -1,8 +1,8 @@
-# tests/services/test_auth_services.py
+# tests/services/test_register_services.py
 import pytest
 from exceptions.auth_exceptions import EmailAlreadyExistsError
 from models.user_model import User
-from services.auth_services import register
+from services.auth.register_services import register
 from schemas.auth.register_request import RegisterRequest
 
 

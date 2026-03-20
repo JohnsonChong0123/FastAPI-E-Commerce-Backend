@@ -5,7 +5,6 @@ from core.security import hash_password
 from exceptions.auth_exceptions import EmailAlreadyExistsError
 
 def register(db, data):
-    """Registers a new user in the database."""
     existing = db.query(User).filter(User.email == data.email).first()
 
     if existing:
@@ -24,3 +23,5 @@ def register(db, data):
     db.refresh(user)
 
     return {"message": "User registered successfully"}
+
+
