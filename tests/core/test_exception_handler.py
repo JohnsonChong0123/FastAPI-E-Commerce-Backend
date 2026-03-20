@@ -4,8 +4,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from core.exception_handler import register_exceptions
 from exceptions.auth_exceptions import (
+    AuthProviderMismatchError,
     EmailAlreadyExistsError, 
-    InvalidCredentialsError, 
+    InvalidCredentialsError,
+    InvalidGoogleTokenError, 
     TokenExpiredError,
     InvalidTokenError
 )
@@ -21,7 +23,9 @@ def mock_app():
     (EmailAlreadyExistsError, 409, "Email already registered"),
     (InvalidCredentialsError, 401, "Invalid email or password"),
     (TokenExpiredError, 401, "Token expired"),
-    (InvalidTokenError, 401, "Invalid token")
+    (InvalidTokenError, 401, "Invalid token"),
+    (InvalidGoogleTokenError, 401, "Invalid Google token"),
+    (AuthProviderMismatchError, 409, "Account exists with different login method")
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):
     @mock_app.get("/trigger-error")

@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     # database
     DATABASE_URL: str
     TEST_DATABASE_URL: str
+    
+    # google oauth
+    GOOGLE_CLIENT_ID: str
 
     model_config = ConfigDict(
         env_file=".env",

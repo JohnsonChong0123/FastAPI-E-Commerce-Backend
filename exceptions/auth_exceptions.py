@@ -10,3 +10,9 @@ class TokenExpiredError(Exception):
 
 class InvalidTokenError(Exception):
     pass
+
+class InvalidGoogleTokenError(Exception):
+    pass
+
+class AuthProviderMismatchError(Exception):
+    pass

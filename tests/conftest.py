@@ -1,6 +1,4 @@
 # tests/conftest.py
-import os
-
 import bcrypt
 import pytest
 from fastapi.testclient import TestClient
@@ -72,6 +70,56 @@ def legacy_user(db_session):
         last_name="Doe",
         email="jane@example.com",
         password_hash=legacy_hash,
+        provider="email"
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+@pytest.fixture
+def mock_google_user():
+    return {
+        "sub": "google-123",
+        "email": "john@gmail.com",
+        "name": "John Doe",
+        "picture": "https://picture.url",
+        "email_verified": True
+    }
+
+@pytest.fixture
+def existing_google_user(db_session):
+    user = User(
+        first_name="John",
+        last_name="Doe",
+        email="john@gmail.com",
+        password_hash=None,
+        provider="google",
+        image_url="https://picture.url"
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+@pytest.fixture
+def mock_local_user():
+    return {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john@gmail.com",
+        "provider": "email",
+        "image_url": None
+    }
+
+
+@pytest.fixture
+def existing_local_user(db_session):
+    user = User(
+        first_name="John",
+        last_name="Doe",
+        email="john@gmail.com",
+        password_hash=hash_password("Secret1234!"),
         provider="email"
     )
     db_session.add(user)
