@@ -14,7 +14,7 @@ class RegisterRequest(BaseModel):
     @field_validator("email") 
     @classmethod
     def normalize_email(cls, v):
-        return v.lower()
+        return v.strip().lower()
     
     @field_validator("first_name", "last_name")
     @classmethod

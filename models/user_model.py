@@ -32,7 +32,7 @@ class User(Base):
     @property
     def avatar(self):
         """
-        优先级：自定义头像 > Gravatar 占位图
+        Returns the URL of the user's avatar. If the user has an image_url, it returns that.
         """
         if self.image_url:
             return self.image_url
