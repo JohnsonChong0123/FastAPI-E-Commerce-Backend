@@ -103,6 +103,14 @@ def existing_google_user(db_session):
     return user
 
 @pytest.fixture
+def mock_facebook_user():
+    return {
+        "id": "fb-123",
+        "name": "John Doe",
+        "email": "john@gmail.com"
+    }
+
+@pytest.fixture
 def mock_local_user():
     return {
         "first_name": "John",

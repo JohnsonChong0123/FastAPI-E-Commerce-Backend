@@ -16,3 +16,6 @@ class InvalidGoogleTokenError(Exception):
 
 class AuthProviderMismatchError(Exception):
     pass
+
+class InvalidFacebookTokenError(Exception):
+    pass

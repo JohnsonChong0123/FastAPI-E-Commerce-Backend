@@ -9,7 +9,8 @@ from exceptions.auth_exceptions import (
     InvalidCredentialsError,
     InvalidGoogleTokenError, 
     TokenExpiredError,
-    InvalidTokenError
+    InvalidTokenError,
+    InvalidFacebookTokenError
 )
 
 @pytest.fixture
@@ -25,7 +26,8 @@ def mock_app():
     (TokenExpiredError, 401, "Token expired"),
     (InvalidTokenError, 401, "Invalid token"),
     (InvalidGoogleTokenError, 401, "Invalid Google token"),
-    (AuthProviderMismatchError, 409, "Account exists with different login method")
+    (AuthProviderMismatchError, 409, "Account exists with different login method"),
+    (InvalidFacebookTokenError, 401, "Invalid Facebook token")
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):
     @mock_app.get("/trigger-error")

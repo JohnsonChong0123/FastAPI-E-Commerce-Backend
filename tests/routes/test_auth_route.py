@@ -3,7 +3,14 @@
 from unittest.mock import patch
 
 from tests.services.auth.test_google_services import PATCH_PATH
+from tests.services.facebook.test_facebook_auth import MOCK_FACEBOOK_USER_INFO
 from tests.services.google.test_google_auth import MOCK_GOOGLE_USER_INFO
+import pytest
+from unittest.mock import patch
+from models.user_model import User
+from core.security import hash_password
+
+FACEBOOK_PATCH_PATH = "services.auth.facebook_login_services.verify_facebook_token"
 
 class TestRegisterRoute:
 
@@ -208,4 +215,129 @@ class TestGoogleLoginRoute:
     def test_empty_id_token_returns_422(self, client):
         """Empty id_token string returns 422."""
         response = client.post("/auth/google", json={"id_token": ""})
+        assert response.status_code == 422
+        
+class TestFacebookLoginRoute:
+    
+    # -------------------------------------------------------------------------
+    # Happy Path
+    # -------------------------------------------------------------------------
+
+    def test_valid_token_returns_200(self, client, mock_facebook_user):
+        """Valid Facebook token returns 200."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            assert response.status_code == 200
+
+    def test_response_contains_access_token(self, client, mock_facebook_user):
+        """Response body contains access_token."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            assert "access_token" in response.json()
+
+    def test_response_contains_refresh_token(self, client, mock_facebook_user):
+        """Response body contains refresh_token."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            assert "refresh_token" in response.json()
+
+    def test_response_contains_correct_provider(self, client, mock_facebook_user):
+        """Response provider is 'facebook'."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            assert response.json()["provider"] == "facebook"
+
+    def test_response_user_is_serialized_correctly(self, client, mock_facebook_user):
+        """User field is serialized via UserResponse."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            user = response.json()["user"]
+            assert user["email"] == "john@gmail.com"
+            assert user["first_name"] == "John"
+            assert user["last_name"] == "Doe"
+
+    def test_response_user_has_no_password_hash(self, client, mock_facebook_user):
+        """Serialized user does not expose password_hash."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            user = response.json()["user"]
+            assert "password_hash" not in user
+
+    def test_response_matches_login_response_schema(self, client, mock_facebook_user):
+        """Response shape matches LoginResponse schema."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = mock_facebook_user
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.facebook.token"}
+            )
+            body = response.json()
+            assert "access_token" in body
+            assert "refresh_token" in body
+            assert "provider" in body
+            assert "user" in body
+
+    # -------------------------------------------------------------------------
+    # Error Path
+    # -------------------------------------------------------------------------
+
+    def test_invalid_token_returns_401(self, client):
+        """Invalid Facebook token returns 401."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = None
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "invalid.token"}
+            )
+            assert response.status_code == 401
+
+    def test_provider_mismatch_returns_409(self, client, existing_local_user):
+        """Existing local user trying Facebook login returns 409."""
+        with patch(FACEBOOK_PATCH_PATH) as mock_verify:
+            mock_verify.return_value = MOCK_FACEBOOK_USER_INFO
+            response = client.post(
+                "/auth/facebook",
+                json={"access_token": "valid.token"}
+            )
+            assert response.status_code == 409
+
+    # -------------------------------------------------------------------------
+    # Validation
+    # -------------------------------------------------------------------------
+
+    def test_missing_access_token_returns_422(self, client):
+        """Missing access_token field returns 422."""
+        response = client.post("/auth/facebook", json={})
+        assert response.status_code == 422
+
+    def test_empty_access_token_returns_422(self, client):
+        """Empty access_token string returns 422."""
+        response = client.post(
+            "/auth/facebook",
+            json={"access_token": ""}
+        )
         assert response.status_code == 422
