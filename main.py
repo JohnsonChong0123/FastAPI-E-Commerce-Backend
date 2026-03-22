@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from core.exception_handler import register_exceptions
-from exceptions.auth_exceptions import EmailAlreadyExistsError
 from models.base import Base
-from routes import auth_route
+from routes import auth_route, product_route
 from database import engine
 
 app = FastAPI()
@@ -10,5 +9,6 @@ app = FastAPI()
 register_exceptions(app)
 
 app.include_router(auth_route.router, prefix="/auth")
+app.include_router(product_route.router, prefix="/product")
 
 Base.metadata.create_all(engine)

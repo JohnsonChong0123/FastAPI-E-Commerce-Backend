@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from exceptions.auth_exceptions import AuthProviderMismatchError, EmailAlreadyExistsError, InvalidCredentialsError, InvalidFacebookTokenError, InvalidGoogleTokenError, InvalidTokenError, TokenExpiredError
+from exceptions.product_exceptions import EbayAuthError, ExternalAPIError
 
 async def email_exists_handler(request: Request, exc: EmailAlreadyExistsError):
     """Handle the EmailAlreadyExistsError by returning a JSON response with a 409 status code."""
@@ -45,6 +46,18 @@ async def fb_token_handler(request: Request, exc: InvalidFacebookTokenError):
         status_code=401,
         content={"detail": "Invalid Facebook token"}
     )
+    
+async def external_api_handler(request: Request, exc: ExternalAPIError):
+    return JSONResponse(
+        status_code=502,
+        content={"detail": "Failed to fetch external products"}
+    )
+    
+async def ebay_auth_handler(request: Request, exc: EbayAuthError):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "eBay authentication failed"}
+    )
 
 def register_exceptions(app: FastAPI):
     """Register all custom exception handlers with the FastAPI app."""
@@ -55,3 +68,5 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(InvalidGoogleTokenError, invalid_google_token_handler)
     app.add_exception_handler(AuthProviderMismatchError, provider_mismatch_handler)
     app.add_exception_handler(InvalidFacebookTokenError, fb_token_handler)
+    app.add_exception_handler(ExternalAPIError, external_api_handler)
+    app.add_exception_handler(EbayAuthError, ebay_auth_handler)
