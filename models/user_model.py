@@ -3,6 +3,7 @@ import uuid
 import hashlib
 from sqlalchemy import Column, Float, String, Numeric, DateTime
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from models.base import Base
 
@@ -39,3 +40,5 @@ class User(Base):
         
         email_hash = hashlib.md5(self.email.strip().lower().encode('utf-8')).hexdigest()
         return f"https://www.gravatar.com/avatar/{email_hash}?d=mp&s=200"
+    
+    cart = relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")

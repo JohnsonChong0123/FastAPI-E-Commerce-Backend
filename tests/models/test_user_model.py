@@ -2,7 +2,8 @@
 import uuid
 import pytest
 from sqlalchemy.exc import IntegrityError
-
+from models.cart_model import Cart
+from models.cart_item_model import CartItem
 from models.user_model import User
 
 
@@ -168,3 +169,44 @@ class TestUserConstraints:
         db_session.add(User(**{**base, "first_name": "Jane"}, password_hash="xyz"))
         with pytest.raises(IntegrityError):
             db_session.commit()
+            
+# ==============================================================================
+# RELATIONSHIPS — CART
+# ==============================================================================
+
+class TestUserCartRelationship:
+
+    def test_user_can_have_a_cart(self, db_session, persisted_user):
+        """Test that a User can be associated with a Cart and that the relationship is properly set up.""" 
+        new_cart = Cart(user_id=persisted_user.id)
+        db_session.add(new_cart)
+        db_session.commit()
+        
+        db_session.refresh(persisted_user)
+        assert persisted_user.cart is not None
+        assert persisted_user.cart.id == new_cart.id
+        assert new_cart.user == persisted_user
+
+    def test_cascade_delete_user_removes_cart(self, db_session, persisted_user):
+        """When a User is deleted, the associated Cart should also be deleted due to cascade settings."""
+        cart = Cart(user=persisted_user)
+        db_session.add(cart)
+        db_session.commit()
+        cart_id = cart.id
+
+        db_session.delete(persisted_user)
+        db_session.commit()
+
+        remaining_cart = db_session.query(Cart).filter_by(id=cart_id).first()
+        assert remaining_cart is None
+
+    def test_delete_orphan_when_setting_none(self, db_session, persisted_user):
+        """Test orphan deletion: when user.cart is set to None, the cart record should be deleted."""
+        cart = Cart(user=persisted_user)
+        db_session.add(cart)
+        db_session.commit()
+
+        persisted_user.cart = None
+        db_session.commit()
+
+        assert db_session.query(Cart).count() == 0

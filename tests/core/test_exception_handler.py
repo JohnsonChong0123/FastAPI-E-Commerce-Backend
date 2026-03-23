@@ -12,7 +12,7 @@ from exceptions.auth_exceptions import (
     InvalidTokenError,
     InvalidFacebookTokenError
 )
-from exceptions.product_exceptions import EbayAuthError, ExternalAPIError
+from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
 
 @pytest.fixture
 def mock_app():
@@ -30,7 +30,8 @@ def mock_app():
     (AuthProviderMismatchError, 409, "Account exists with different login method"),
     (InvalidFacebookTokenError, 401, "Invalid Facebook token"),
     (ExternalAPIError, 502, "Failed to fetch external products"),
-    (EbayAuthError, 500, "eBay authentication failed")
+    (EbayAuthError, 500, "eBay authentication failed"),
+    (ProductNotFoundError, 404, "Product not found")
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):
     @mock_app.get("/trigger-error")

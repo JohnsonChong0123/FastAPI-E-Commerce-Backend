@@ -5,3 +5,6 @@ class ExternalAPIError(Exception):
 
 class EbayAuthError(Exception):
     pass
+
+class ProductNotFoundError(Exception):
+    pass
