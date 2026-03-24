@@ -1,22 +1,41 @@
 # tests/routes/test_cart_route.py
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from core.jwt import create_access_token
+from core.jwt import create_access_token, create_refresh_token
 from core.security import hash_password
 from models.user_model import User
 from exceptions.product_exceptions import ProductNotFoundError
 from main import app
 from database import get_db
+import uuid
 
-
-PATCH_PATH = "routes.cart_route.cart_services.add_to_cart"
+ADD_PATCH_PATH = "routes.cart_route.cart_services.add_to_cart"
+GET_PATCH_PATH = "routes.cart_route.cart_services.get_cart"
 
 VALID_PAYLOAD = {
     "product_id": "v1|123456|0",
     "quantity": 1
 }
 
+MOCK_CART_RESPONSE = {
+    "id": str(uuid.uuid4()),
+    "items": [
+        {
+            "product_id": "v1|111|0",
+            "name": "Wireless Headphones",
+            "price": 99.99,
+            "quantity": 2,
+            "image_url": "https://example.com/img.jpg"
+        }
+    ],
+    "cart_total": 199.98
+}
 
+MOCK_EMPTY_CART = {
+    "id": str(uuid.uuid4()),
+    "items": [],
+    "cart_total": 0
+}
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -35,7 +54,7 @@ class TestAddToCartRoute:
     @pytest.mark.asyncio
     async def test_add_to_cart_returns_200(self, client, registered_user):
         """Valid request returns 200."""
-        with patch(PATCH_PATH, new_callable=AsyncMock) as mock_add:
+        with patch(ADD_PATCH_PATH, new_callable=AsyncMock) as mock_add:
             mock_add.return_value = {"message": "Added to cart successfully"}
             response = client.post(
                 "/cart/add",
@@ -49,7 +68,7 @@ class TestAddToCartRoute:
         self, client, registered_user
     ):
         """Valid request returns correct success message."""
-        with patch(PATCH_PATH, new_callable=AsyncMock) as mock_add:
+        with patch(ADD_PATCH_PATH, new_callable=AsyncMock) as mock_add:
             mock_add.return_value = {"message": "Added to cart successfully"}
             response = client.post(
                 "/cart/add",
@@ -63,7 +82,7 @@ class TestAddToCartRoute:
         self, client, registered_user
     ):
         """Service is called with correct user and payload."""
-        with patch(PATCH_PATH, new_callable=AsyncMock) as mock_add:
+        with patch(ADD_PATCH_PATH, new_callable=AsyncMock) as mock_add:
             mock_add.return_value = {"message": "Added to cart successfully"}
             client.post(
                 "/cart/add",
@@ -171,7 +190,7 @@ class TestAddToCartRouteErrors:
         self, client, registered_user
     ):
         """Unexpected service error returns 500."""
-        with patch(PATCH_PATH, new_callable=AsyncMock) as mock_add:
+        with patch(ADD_PATCH_PATH, new_callable=AsyncMock) as mock_add:
             mock_add.side_effect = Exception("Unexpected error")
             response = client.post(
                 "/cart/add",
@@ -230,3 +249,140 @@ class TestAddToCartRouteTransaction:
                 mock_db.rollback.assert_called_once()
         finally:
             app.dependency_overrides.clear()
+            
+# ==============================================================================
+# Happy Path Tests
+# ==============================================================================
+
+class TestGetCartRoute:
+
+    @pytest.mark.asyncio
+    async def test_get_cart_returns_200(self, client, registered_user):
+        """Valid token returns 200."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_CART_RESPONSE
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_cart_returns_correct_schema(
+        self, client, registered_user
+    ):
+        """Response matches CartResponse schema."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_CART_RESPONSE
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            body = response.json()
+            assert "id" in body
+            assert "items" in body
+            assert "cart_total" in body
+
+    @pytest.mark.asyncio
+    async def test_get_cart_returns_correct_items(
+        self, client, registered_user
+    ):
+        """Response contains correct items data."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_CART_RESPONSE
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            body = response.json()
+            assert len(body["items"]) == 1
+            assert body["items"][0]["product_id"] == "v1|111|0"
+            assert body["items"][0]["name"] == "Wireless Headphones"
+            assert body["items"][0]["price"] == 99.99
+            assert body["items"][0]["quantity"] == 2
+
+    @pytest.mark.asyncio
+    async def test_get_cart_returns_correct_total(
+        self, client, registered_user
+    ):
+        """Response contains correct cart_total."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_CART_RESPONSE
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            assert response.json()["cart_total"] == 199.98
+
+    @pytest.mark.asyncio
+    async def test_get_empty_cart_returns_200(
+        self, client, registered_user
+    ):
+        """Empty cart returns 200 with empty items."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_EMPTY_CART
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            assert response.status_code == 200
+            body = response.json()
+            assert body["items"] == []
+            assert body["cart_total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_item_schema_contains_correct_fields(
+        self, client, registered_user
+    ):
+        """Each cart item contains all required fields."""
+        with patch(GET_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_CART_RESPONSE
+            response = client.get(
+                "/cart",
+                headers=auth_header(registered_user.id)
+            )
+            item = response.json()["items"][0]
+            assert "product_id" in item
+            assert "name" in item
+            assert "price" in item
+            assert "quantity" in item
+            assert "image_url" in item
+
+
+# ==============================================================================
+# Auth Tests
+# ==============================================================================
+
+class TestGetCartRouteAuth:
+
+    def test_no_token_returns_401(self, client):
+        """Missing Authorization header returns 401."""
+        response = client.get("/cart")
+        assert response.status_code == 401
+
+    def test_invalid_token_returns_401(self, client):
+        """Invalid token returns 401."""
+        response = client.get(
+            "/cart",
+            headers={"Authorization": "Bearer invalid.token"}
+        )
+        assert response.status_code == 401
+
+    def test_expired_token_returns_401(self, client):
+        """Expired token returns 401."""
+        from core.jwt import create_token
+        expired = create_token("some-id", "access", expires_delta=-1)
+        response = client.get(
+            "/cart",
+            headers={"Authorization": f"Bearer {expired}"}
+        )
+        assert response.status_code == 401
+
+    def test_refresh_token_returns_401(self, client, registered_user):
+        """Refresh token used instead of access token returns 401."""
+        refresh_token = create_refresh_token(str(registered_user.id))
+        response = client.get(
+            "/cart",
+            headers={"Authorization": f"Bearer {refresh_token}"}
+        )
+        assert response.status_code == 401

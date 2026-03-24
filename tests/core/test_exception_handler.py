@@ -12,6 +12,7 @@ from exceptions.auth_exceptions import (
     InvalidTokenError,
     InvalidFacebookTokenError
 )
+from exceptions.cart_exceptions import CartItemNotFoundError, CartNotFoundError
 from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
 
 @pytest.fixture
@@ -31,7 +32,9 @@ def mock_app():
     (InvalidFacebookTokenError, 401, "Invalid Facebook token"),
     (ExternalAPIError, 502, "Failed to fetch external products"),
     (EbayAuthError, 500, "eBay authentication failed"),
-    (ProductNotFoundError, 404, "Product not found")
+    (ProductNotFoundError, 404, "Product not found"),
+    (CartNotFoundError, 404, "Cart not found"),
+    (CartItemNotFoundError, 404, "Cart item not found")
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):
     @mock_app.get("/trigger-error")
