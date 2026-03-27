@@ -42,3 +42,4 @@ class User(Base):
         return f"https://www.gravatar.com/avatar/{email_hash}?d=mp&s=200"
     
     cart = relationship("Cart", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    wishlist = relationship("Wishlist", back_populates="user", cascade="all, delete-orphan")

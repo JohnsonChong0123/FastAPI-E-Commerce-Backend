@@ -14,6 +14,7 @@ from exceptions.auth_exceptions import (
 )
 from exceptions.cart_exceptions import CartItemNotFoundError, CartNotFoundError
 from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
+from exceptions.wishlist_exceptions import WishlistNotFoundError
 
 @pytest.fixture
 def mock_app():
@@ -34,7 +35,9 @@ def mock_app():
     (EbayAuthError, 500, "eBay authentication failed"),
     (ProductNotFoundError, 404, "Product not found"),
     (CartNotFoundError, 404, "Cart not found"),
-    (CartItemNotFoundError, 404, "Cart item not found")
+    (CartItemNotFoundError, 404, "Cart item not found"),
+    (WishlistNotFoundError, 404, "Wishlist not found")
+    
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):
     @mock_app.get("/trigger-error")

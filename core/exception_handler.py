@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from exceptions.auth_exceptions import AuthProviderMismatchError, EmailAlreadyExistsError, InvalidCredentialsError, InvalidFacebookTokenError, InvalidGoogleTokenError, InvalidTokenError, TokenExpiredError
 from exceptions.cart_exceptions import CartItemNotFoundError, CartNotFoundError
 from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
+from exceptions.wishlist_exceptions import WishlistNotFoundError
 
 async def email_exists_handler(request: Request, exc: EmailAlreadyExistsError):
     """Handle the EmailAlreadyExistsError by returning a JSON response with a 409 status code."""
@@ -78,6 +79,12 @@ async def cart_item_not_found_handler(request: Request, exc: CartItemNotFoundErr
         content={"detail": "Cart item not found"}
     )
     
+async def wishlist_not_found_handler(request: Request, exc: WishlistNotFoundError):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": "Wishlist not found"}
+    )
+    
 def register_exceptions(app: FastAPI):
     """Register all custom exception handlers with the FastAPI app."""
     app.add_exception_handler(EmailAlreadyExistsError, email_exists_handler)
@@ -92,3 +99,4 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(ProductNotFoundError, product_not_found_handler)
     app.add_exception_handler(CartNotFoundError, cart_not_found_handler)
     app.add_exception_handler(CartItemNotFoundError, cart_item_not_found_handler)
+    app.add_exception_handler(WishlistNotFoundError, wishlist_not_found_handler)
