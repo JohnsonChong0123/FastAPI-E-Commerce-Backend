@@ -3,9 +3,18 @@ import pytest
 from unittest.mock import patch, AsyncMock
 from exceptions.product_exceptions import ExternalAPIError
 from services.product.product_services import get_products
-
+from services.product.product_services import get_product_details
 
 PATCH_PATH = "services.product.product_services.fetch_products"
+SINGLE_PRODUCT_PATCH_PATH = "services.product.product_services.fetch_single_product"
+
+MOCK_EBAY_ITEM = {
+    "itemId": "v1|123456|0",
+    "title": "Wireless Headphones",
+    "shortDescription": "High quality wireless headphones with ANC.",
+    "price": {"value": "99.99", "currency": "USD"},
+    "image": {"imageUrl": "https://example.com/img.jpg"}
+}
 
 
 def make_item(
@@ -241,3 +250,188 @@ class TestGetProductsMissingFields:
             }
             result = await get_products()
             assert result[0]["original_price"] == 0.0   # ← documents bug
+        
+# ==============================================================================
+# ExternalAPIError Tests
+# ==============================================================================
+
+class TestGetProductDetailsAPIError:
+
+    @pytest.mark.asyncio
+    async def test_none_response_raises_external_api_error(self):
+        """None from fetch_single_product raises ExternalAPIError."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = None
+            with pytest.raises(ExternalAPIError):
+                await get_product_details("v1|123456|0")
+
+    @pytest.mark.asyncio
+    async def test_fetch_exception_propagates(self):
+        """Exception from fetch_single_product propagates."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.side_effect = Exception("eBay-Item-Detail error")
+            with pytest.raises(Exception):
+                await get_product_details("v1|123456|0")
+
+    @pytest.mark.asyncio
+    async def test_none_does_not_return_partial_data(self):
+        """No partial data returned when product not found."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = None
+            try:
+                await get_product_details("v1|123456|0")
+            except ExternalAPIError:
+                pass
+
+
+# ==============================================================================
+# Happy Path Tests
+# ==============================================================================
+
+class TestGetProductDetailsHappyPath:
+
+    @pytest.mark.asyncio
+    async def test_returns_dict(self):
+        """Valid response returns a dict."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert isinstance(result, dict)
+
+    @pytest.mark.asyncio
+    async def test_fetch_called_with_correct_product_id(self):
+        """fetch_single_product called with correct product_id."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            await get_product_details("v1|123456|0")
+            mock_fetch.assert_called_once_with("v1|123456|0")
+
+    @pytest.mark.asyncio
+    async def test_different_product_ids_call_fetch_correctly(self):
+        """Different product IDs are passed correctly to fetch."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            await get_product_details("v1|999|0")
+            mock_fetch.assert_called_once_with("v1|999|0")
+
+
+# ==============================================================================
+# Field Parsing Tests
+# ==============================================================================
+
+class TestGetProductDetailsFieldParsing:
+
+    @pytest.mark.asyncio
+    async def test_id_parsed_from_item_id(self):
+        """itemId is mapped to id field."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["id"] == "v1|123456|0"
+
+    @pytest.mark.asyncio
+    async def test_title_parsed_correctly(self):
+        """title is mapped correctly."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["title"] == "Wireless Headphones"
+
+    @pytest.mark.asyncio
+    async def test_description_parsed_from_short_description(self):
+        """description is mapped from shortDescription field."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["description"] == \
+                "High quality wireless headphones with ANC."
+
+    @pytest.mark.asyncio
+    async def test_price_parsed_as_float(self):
+        """price value is parsed as float."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["price"] == 99.99
+            assert isinstance(result["price"], float)
+
+    @pytest.mark.asyncio
+    async def test_image_url_parsed_correctly(self):
+        """imageUrl is mapped to image_url field."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["image_url"] == "https://example.com/img.jpg"
+
+
+# ==============================================================================
+# Missing Field Tests
+# ==============================================================================
+
+class TestGetProductDetailsMissingFields:
+
+    @pytest.mark.asyncio
+    async def test_missing_short_description_defaults_to_none(self):
+        """Missing shortDescription defaults to None."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = {
+                "itemId": "v1|123456|0",
+                "title": "Wireless Headphones",
+                "price": {"value": "99.99"}
+                # no shortDescription
+            }
+            result = await get_product_details("v1|123456|0")
+            assert result["description"] is None
+
+    @pytest.mark.asyncio
+    async def test_missing_price_defaults_to_zero(self):
+        """Missing price defaults to 0.0."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = {
+                "itemId": "v1|123456|0",
+                "title": "Wireless Headphones",
+                "shortDescription": "Great product."
+                # no price
+            }
+            result = await get_product_details("v1|123456|0")
+            assert result["price"] == 0.0
+
+    @pytest.mark.asyncio
+    async def test_missing_image_defaults_to_none(self):
+        """Missing image field defaults to None."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = {
+                "itemId": "v1|123456|0",
+                "title": "Wireless Headphones",
+                "shortDescription": "Great product.",
+                "price": {"value": "99.99"}
+                # no image
+            }
+            result = await get_product_details("v1|123456|0")
+            assert result["image_url"] is None
+
+    @pytest.mark.asyncio
+    async def test_missing_title_defaults_to_none(self):
+        """Missing title defaults to None."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = {
+                "itemId": "v1|123456|0",
+                "shortDescription": "Great product.",
+                "price": {"value": "99.99"}
+                # no title
+            }
+            result = await get_product_details("v1|123456|0")
+            assert result["title"] is None
+
+    @pytest.mark.asyncio
+    async def test_missing_item_id_defaults_to_none(self):
+        """Missing itemId defaults to None."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = {
+                "title": "Wireless Headphones",
+                "shortDescription": "Great product.",
+                "price": {"value": "99.99"}
+                # no itemId
+            }
+            result = await get_product_details("v1|123456|0")
+            assert result["id"] is None

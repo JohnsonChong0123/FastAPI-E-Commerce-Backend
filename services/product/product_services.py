@@ -1,5 +1,5 @@
 # services/product/product_services.py
-from services.ebay.ebay_services import fetch_products
+from services.ebay.ebay_services import fetch_products, fetch_single_product
 from exceptions.product_exceptions import ExternalAPIError
 
 async def get_products():
@@ -27,4 +27,18 @@ async def get_products():
             "image_url": item.get("image", {}).get("imageUrl"),
         })
 
-    return results
+    return results     
+
+async def get_product_details(product_id: str):
+    data = await fetch_single_product(product_id)
+    
+    if not data:
+        raise ExternalAPIError()
+    
+    return {
+        "id": data.get("itemId"),
+        "title": data.get("title"),
+        "description": data.get("shortDescription"),
+        "price": float(data.get("price", {}).get("value", 0.0)),
+        "image_url": data.get("image", {}).get("imageUrl"),
+    }
