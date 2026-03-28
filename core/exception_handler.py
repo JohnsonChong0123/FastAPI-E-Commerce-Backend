@@ -1,7 +1,7 @@
 # core/exception_handler.py
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from exceptions.auth_exceptions import AuthProviderMismatchError, EmailAlreadyExistsError, InvalidCredentialsError, InvalidFacebookTokenError, InvalidGoogleTokenError, InvalidTokenError, TokenExpiredError
+from exceptions.auth_exceptions import AuthProviderMismatchError, EmailAlreadyExistsError, InvalidCredentialsError, InvalidFacebookTokenError, InvalidGoogleTokenError, InvalidTokenError, RefreshTokenError, TokenExpiredError, UserNotFoundError
 from exceptions.cart_exceptions import CartItemNotFoundError, CartNotFoundError
 from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
 from exceptions.wishlist_exceptions import WishlistNotFoundError
@@ -85,6 +85,20 @@ async def wishlist_not_found_handler(request: Request, exc: WishlistNotFoundErro
         content={"detail": "Wishlist not found"}
     )
     
+async def user_not_found_handler(request: Request, exc: UserNotFoundError):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": "User not found"}
+    )
+    
+async def refresh_token_handler(request: Request, exc: RefreshTokenError):
+    return JSONResponse(
+        status_code=401,
+        content={"detail": "Invalid or expired token"}
+    )
+    
+    
+    
 def register_exceptions(app: FastAPI):
     """Register all custom exception handlers with the FastAPI app."""
     app.add_exception_handler(EmailAlreadyExistsError, email_exists_handler)
@@ -100,3 +114,5 @@ def register_exceptions(app: FastAPI):
     app.add_exception_handler(CartNotFoundError, cart_not_found_handler)
     app.add_exception_handler(CartItemNotFoundError, cart_item_not_found_handler)
     app.add_exception_handler(WishlistNotFoundError, wishlist_not_found_handler)
+    app.add_exception_handler(RefreshTokenError, refresh_token_handler)
+    app.add_exception_handler(UserNotFoundError, user_not_found_handler)

@@ -7,10 +7,12 @@ from exceptions.auth_exceptions import (
     AuthProviderMismatchError,
     EmailAlreadyExistsError, 
     InvalidCredentialsError,
-    InvalidGoogleTokenError, 
+    InvalidGoogleTokenError,
+    RefreshTokenError, 
     TokenExpiredError,
     InvalidTokenError,
-    InvalidFacebookTokenError
+    InvalidFacebookTokenError,
+    UserNotFoundError
 )
 from exceptions.cart_exceptions import CartItemNotFoundError, CartNotFoundError
 from exceptions.product_exceptions import EbayAuthError, ExternalAPIError, ProductNotFoundError
@@ -36,7 +38,9 @@ def mock_app():
     (ProductNotFoundError, 404, "Product not found"),
     (CartNotFoundError, 404, "Cart not found"),
     (CartItemNotFoundError, 404, "Cart item not found"),
-    (WishlistNotFoundError, 404, "Wishlist not found")
+    (WishlistNotFoundError, 404, "Wishlist not found"),
+    (UserNotFoundError, 404, "User not found"),
+    (RefreshTokenError, 401, "Invalid or expired token")
     
 ])
 def test_exception_handlers_format(mock_app, exception_class, expected_status, expected_detail):

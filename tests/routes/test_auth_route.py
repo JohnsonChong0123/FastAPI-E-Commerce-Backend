@@ -1,15 +1,18 @@
 # tests/routes/test_auth_route.py
 
-from unittest.mock import patch
-
 from tests.services.auth.test_google_services import PATCH_PATH
 from tests.services.facebook.test_facebook_auth import MOCK_FACEBOOK_USER_INFO
 from tests.services.google.test_google_auth import MOCK_GOOGLE_USER_INFO
-import pytest
 from unittest.mock import patch
-from models.user_model import User
-from core.security import hash_password
+from core.jwt import (
+    create_access_token,
+    create_refresh_token,
+    create_token
+)
+from exceptions.auth_exceptions import RefreshTokenError, UserNotFoundError
+import uuid
 
+REFRESH_TOKEN_PATCH_PATH = "routes.auth_route.refresh_token_services.refresh_token"
 FACEBOOK_PATCH_PATH = "services.auth.facebook_login_services.verify_facebook_token"
 
 class TestRegisterRoute:
@@ -339,5 +342,156 @@ class TestFacebookLoginRoute:
         response = client.post(
             "/auth/facebook",
             json={"access_token": ""}
+        )
+        assert response.status_code == 422
+        
+
+# ==============================================================================
+# Happy Path Tests
+# ==============================================================================
+
+class TestRefreshTokenRoute:
+
+    def test_valid_refresh_token_returns_200(
+        self, client, registered_user
+    ):
+        """Valid refresh token returns 200."""
+        token = create_refresh_token(str(registered_user.id))
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": token}
+        )
+        assert response.status_code == 200
+
+    def test_valid_refresh_token_returns_access_token(
+        self, client, registered_user
+    ):
+        """Valid refresh token returns new access token."""
+        token = create_refresh_token(str(registered_user.id))
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": token}
+        )
+        assert "access_token" in response.json()
+
+    def test_returned_access_token_is_non_empty(
+        self, client, registered_user
+    ):
+        """Returned access_token is a non-empty string."""
+        token = create_refresh_token(str(registered_user.id))
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": token}
+        )
+        assert len(response.json()["access_token"]) > 0
+
+    def test_response_does_not_contain_refresh_token(
+        self, client, registered_user
+    ):
+        """Response only contains access_token — no refresh token."""
+        token = create_refresh_token(str(registered_user.id))
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": token}
+        )
+        assert "refresh_token" not in response.json()
+
+    def test_does_not_require_authorization_header(self, client):
+        """Refresh endpoint does not require Bearer token header."""
+        with patch(REFRESH_TOKEN_PATCH_PATH) as mock_refresh:
+            mock_refresh.return_value = {"access_token": "new.access.token"}
+            response = client.post(
+                "/auth/refresh",
+                json={"refresh_token": "some.token"}
+            )
+            assert response.status_code != 401
+
+
+# ==============================================================================
+# Error Path Tests
+# ==============================================================================
+
+class TestRefreshTokenRouteErrors:
+
+    def test_invalid_token_returns_401(self, client):
+        """Invalid refresh token returns 401."""
+        with patch(REFRESH_TOKEN_PATCH_PATH) as mock_refresh:
+            mock_refresh.side_effect = RefreshTokenError()
+            response = client.post(
+                "/auth/refresh",
+                json={"refresh_token": "invalid.token"}
+            )
+            assert response.status_code == 401
+
+    def test_expired_token_returns_401(self, client):
+        """Expired refresh token returns 401."""
+        expired = create_token(
+            str(uuid.uuid4()), "refresh", expires_delta=-1
+        )
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": expired}
+        )
+        assert response.status_code == 401
+
+    def test_access_token_used_as_refresh_returns_401(
+        self, client, registered_user
+    ):
+        """Access token used as refresh token returns 401."""
+        access_token = create_access_token(str(registered_user.id))
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": access_token}
+        )
+        assert response.status_code == 401
+
+    def test_deleted_user_returns_404(self, client):
+        """Valid token for deleted user returns 404."""
+        with patch(REFRESH_TOKEN_PATCH_PATH) as mock_refresh:
+            mock_refresh.side_effect = UserNotFoundError()
+            token = create_refresh_token(str(uuid.uuid4()))
+            response = client.post(
+                "/auth/refresh",
+                json={"refresh_token": token}
+            )
+            assert response.status_code == 404
+
+    def test_error_response_does_not_expose_internals(self, client):
+        """Error response does not expose internal details."""
+        with patch(REFRESH_TOKEN_PATCH_PATH) as mock_refresh:
+            mock_refresh.side_effect = RefreshTokenError()
+            response = client.post(
+                "/auth/refresh",
+                json={"refresh_token": "invalid.token"}
+            )
+            body = str(response.json())
+            assert "traceback" not in body.lower()
+            assert "exception" not in body.lower()
+
+
+# ==============================================================================
+# Validation Tests
+# ==============================================================================
+
+class TestRefreshTokenRouteValidation:
+
+    def test_missing_refresh_token_returns_422(self, client):
+        """Missing refresh_token field returns 422."""
+        response = client.post("/auth/refresh", json={})
+        assert response.status_code == 422
+
+    def test_empty_refresh_token_returns_422(self, client):
+        """Empty refresh_token string returns 422."""
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": ""}
+        )
+        assert response.status_code == 422
+
+    def test_whitespace_refresh_token_returns_422(self, client):
+        """Whitespace-only refresh_token returns 422."""
+        response = client.post(
+            "/auth/refresh",
+            json={"refresh_token": "   "}
         )
         assert response.status_code == 422

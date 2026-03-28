@@ -19,3 +19,9 @@ class AuthProviderMismatchError(Exception):
 
 class InvalidFacebookTokenError(Exception):
     pass
+
+class RefreshTokenError(Exception):
+    pass
+
+class UserNotFoundError(Exception):
+    pass

@@ -1,14 +1,16 @@
 # routes/auth_route.py
 from sqlalchemy.orm import Session
+from core import jwt
 from database import get_db
 from fastapi import APIRouter, Depends
 from schemas.auth.facebook_login_request import FacebookLoginRequest
 from schemas.auth.google_login_request import GoogleLoginRequest
 from schemas.auth.login_request import LoginRequest
 from schemas.auth.login_response import LoginResponse
+from schemas.auth.refresh_token_request import RefreshTokenRequest
 from schemas.auth.register_request import RegisterRequest
 from schemas.auth.user_response import UserResponse
-from services.auth import facebook_login_services, google_login_services, login_services, register_services
+from services.auth import facebook_login_services, google_login_services, login_services, refresh_token_services, register_services
 
 router = APIRouter()
 
@@ -45,3 +47,7 @@ def facebook_login(
         **result,
         "user": UserResponse.model_validate(result["user"])
     }
+    
+@router.post("/refresh")
+def refresh_token(data: RefreshTokenRequest, db: Session = Depends(get_db)):
+    return refresh_token_services.refresh_token(data, db)
