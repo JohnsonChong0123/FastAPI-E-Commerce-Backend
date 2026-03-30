@@ -10,7 +10,7 @@ This project serves as the backend counterpart to my mobile client:
 
 ---
 
-# 🎯 Project Purpose
+## 🎯 Project Purpose
 
 This project demonstrates **modern backend engineering practices** used in real-world applications:
 
@@ -23,7 +23,7 @@ This project demonstrates **modern backend engineering practices** used in real-
 
 ---
 
-# ✨ Features
+## ✨ Features
 
 | Feature                   | Status      |
 | ------------------------- | ----------- |
@@ -39,7 +39,7 @@ This project demonstrates **modern backend engineering practices** used in real-
 
 ---
 
-# 🧱 Architecture
+## 🧱 Architecture
 
 The project follows **Clean Architecture** principles:
 
@@ -67,7 +67,7 @@ Benefits:
 
 ---
 
-# 🔧 Tech Stack
+## 🔧 Tech Stack
 
 | Category          | Package                             |
 | ----------------- | ----------------------------------- |
@@ -83,9 +83,9 @@ Benefits:
 
 ---
 
-# 🚀 Getting Started
+## 🚀 Getting Started
 
-## 1. Prerequisites
+### 1. Prerequisites
 
 * Python 3.10+
 * PostgreSQL (recommended)
@@ -99,7 +99,7 @@ pip install uv
 
 ---
 
-## 2. Clone Repository
+### 2. Clone Repository
 
 ```
 git clone https://github.com/JohnsonChong0123/FastAPI-E-Commerce-Backend.git
@@ -109,7 +109,7 @@ cd FastAPI-E-Commerce-Backend
 
 ---
 
-## 3. Create Virtual Environment
+### 3. Create Virtual Environment
 
 Mac / Linux:
 
@@ -127,7 +127,7 @@ venv\Scripts\activate
 
 ---
 
-## 4. Install Dependencies
+### 4. Install Dependencies
 
 pip:
 
@@ -143,18 +143,17 @@ uv sync
 
 ---
 
-## 5. Setup Environment Variables
+### 5. Setup Environment Variables
 
 Copy example env file:
 
 ```
 cp .env.example .env
 ```
-# Fill in your credentials in .env
 
 ---
 
-## 6. Run Database Migration
+### 6. Run Database Migration
 
 ```
 alembic upgrade head
@@ -162,7 +161,7 @@ alembic upgrade head
 
 ---
 
-## 7. Start Development Server
+### 7. Start Development Server
 
 ```
 uvicorn main:app --reload --port 8000
@@ -182,7 +181,7 @@ http://localhost:8000/docs
 
 ---
 
-# 🔑 Environment Variables
+## 🔑 Environment Variables
 
 ```env
 DATABASE_URL=your_database_url
@@ -194,7 +193,7 @@ EBAY_CLIENT_SECRET=your_ebay_client_secret
 ```
 ---
 
-# 🧪 Testing
+## 🧪 Testing
 
 Run all tests:
 
@@ -216,7 +215,7 @@ htmlcov/index.html
 
 ---
 
-# 📁 Project Structure
+## 📁 Project Structure
 
 ```
 .
@@ -234,7 +233,7 @@ htmlcov/index.html
 
 ---
 
-# 📝 Note
+## 📝 Note
 
 This project is part of my portfolio to practice **real-world backend engineering skills** and demonstrate understanding of:
 
