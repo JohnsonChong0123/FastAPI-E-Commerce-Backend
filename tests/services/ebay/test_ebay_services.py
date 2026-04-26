@@ -195,8 +195,8 @@ class TestFetchProductsRequestConstruction:
                 assert headers["Authorization"] == "Bearer valid.token"
 
     @pytest.mark.asyncio
-    async def test_correct_category_id_in_params(self):
-        """Correct category_ids param is sent."""
+    async def test_correct_query_in_params(self):
+        """Correct q param is sent."""
         with patch(AUTH_PATCH, new_callable=AsyncMock) as mock_auth:
             mock_auth.return_value = "valid.token"
             mock_response = make_mock_response(
@@ -208,7 +208,39 @@ class TestFetchProductsRequestConstruction:
                 mock_client.return_value.__aenter__.return_value.get = mock_get
                 await fetch_products()
                 params = mock_get.call_args[1]["params"]
-                assert params["category_ids"] == "9355"
+                assert params["q"] == "laptop"
+                
+    @pytest.mark.asyncio
+    async def test_correct_sort_in_params(self):
+        """Correct sort param is sent."""
+        with patch(AUTH_PATCH, new_callable=AsyncMock) as mock_auth:
+            mock_auth.return_value = "valid.token"
+            mock_response = make_mock_response(
+                status_code=200,
+                json_data=MOCK_EBAY_RESPONSE
+            )
+            with patch(CLIENT_PATCH) as mock_client:
+                mock_get = AsyncMock(return_value=mock_response)
+                mock_client.return_value.__aenter__.return_value.get = mock_get
+                await fetch_products()
+                params = mock_get.call_args[1]["params"]
+                assert params["sort"] == "newlyListed"
+                
+    @pytest.mark.asyncio
+    async def test_correct_filter_in_params(self):
+        """Correct filter param is sent."""
+        with patch(AUTH_PATCH, new_callable=AsyncMock) as mock_auth:
+            mock_auth.return_value = "valid.token"
+            mock_response = make_mock_response(
+                status_code=200,
+                json_data=MOCK_EBAY_RESPONSE
+            )
+            with patch(CLIENT_PATCH) as mock_client:
+                mock_get = AsyncMock(return_value=mock_response)
+                mock_client.return_value.__aenter__.return_value.get = mock_get
+                await fetch_products()
+                params = mock_get.call_args[1]["params"]
+                assert params["filter"] == "conditions:{NEW}"
 
     @pytest.mark.asyncio
     async def test_correct_limit_in_params(self):
@@ -224,7 +256,7 @@ class TestFetchProductsRequestConstruction:
                 mock_client.return_value.__aenter__.return_value.get = mock_get
                 await fetch_products()
                 params = mock_get.call_args[1]["params"]
-                assert params["limit"] == 20
+                assert params["limit"] == 100
 
     @pytest.mark.asyncio
     async def test_content_type_is_json(self):

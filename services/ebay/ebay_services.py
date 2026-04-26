@@ -4,7 +4,7 @@ from exceptions.product_exceptions import EbayAuthError
 from services.ebay.ebay_auth import get_ebay_access_token
 
 @handle_api_errors(service_name="eBay-Search")
-async def fetch_products():
+async def fetch_products(q: str = "laptop", limit: int = 100):
     try:
         token = await get_ebay_access_token()
     except Exception:
@@ -13,8 +13,10 @@ async def fetch_products():
     ebay_url = "https://api.ebay.com/buy/browse/v1/item_summary/search"
 
     params = {
-        "category_ids": "9355",
-        "limit": 20
+        "q": q,
+        "limit": limit,
+        "filter": "conditions:{NEW}",
+        "sort": "newlyListed"
     }
     
     headers = {

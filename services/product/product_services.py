@@ -2,9 +2,9 @@
 from services.ebay.ebay_services import fetch_products, fetch_single_product
 from exceptions.product_exceptions import ExternalAPIError
 
-async def get_products():
-    data = await fetch_products()
-    
+async def get_products(q: str = "laptop", limit: int = 100):
+    data = await fetch_products(q=q, limit=limit)
+
     if not data or "itemSummaries" not in data:
         raise ExternalAPIError()
 

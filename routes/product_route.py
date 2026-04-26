@@ -6,8 +6,8 @@ from services.product import product_services
 router = APIRouter()
 
 @router.get("/list-products", response_model=list[ProductSummaryResponse])
-async def list_products():
-    return await product_services.get_products()
+async def list_products(q: str = "laptop", limit: int = 100):
+    return await product_services.get_products(q=q, limit=limit)
 
 @router.get("/{product_id}", response_model=ProductDetailsResponse)
 async def get_product_details(product_id: str):
