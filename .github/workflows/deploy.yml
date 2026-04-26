@@ -56,8 +56,28 @@ jobs:
               "slotSetting": false
             },
             {
+              "name": "TEST_DATABASE_URL",
+              "value": "${{ secrets.TEST_DATABASE_URL }}",
+              "slotSetting": false
+            },
+            {
               "name": "TOKEN_SECRET_KEY",
               "value": "${{ secrets.TOKEN_SECRET_KEY }}",
+              "slotSetting": false
+            },
+            {
+              "name": "GOOGLE_CLIENT_ID",
+              "value": "${{ secrets.GOOGLE_CLIENT_ID }}",
+              "slotSetting": false
+            },
+            {
+              "name": "EBAY_CLIENT_ID",
+              "value": "${{ secrets.EBAY_CLIENT_ID }}",
+              "slotSetting": false
+            },
+            {
+              "name": "EBAY_CLIENT_SECRET",
+              "value": "${{ secrets.EBAY_CLIENT_SECRET }}",
               "slotSetting": false
             },
             {
