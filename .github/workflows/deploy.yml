@@ -1,0 +1,72 @@
+name: Build and Deploy to Azure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  ACR_NAME: myecommerceacr2025
+  WEBAPP_NAME: myfastapiecom001
+  RESOURCE_GROUP: myEcommerceRG
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Login to ACR
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ env.ACR_NAME }}.azurecr.io
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+    
+    - name: Build and push Docker image
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:${{ github.sha }} .
+        docker push ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:${{ github.sha }}
+        docker tag ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:${{ github.sha }} ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:latest
+        docker push ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:latest
+    
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.WEBAPP_NAME }}
+        images: ${{ env.ACR_NAME }}.azurecr.io/fastapi-ecommerce:${{ github.sha }}
+    
+    - name: Configure App Settings
+      uses: azure/appservice-settings@v1
+      with:
+        app-name: ${{ env.WEBAPP_NAME }}
+        app-settings-json: |
+          [
+            {
+              "name": "DATABASE_URL",
+              "value": "${{ secrets.DATABASE_URL }}",
+              "slotSetting": false
+            },
+            {
+              "name": "TOKEN_SECRET_KEY",
+              "value": "${{ secrets.TOKEN_SECRET_KEY }}",
+              "slotSetting": false
+            },
+            {
+              "name": "WEBSITES_PORT",
+              "value": "8000",
+              "slotSetting": false
+            }
+          ]
+    
+    - name: Restart Web App
+      run: |
+        az webapp restart --name ${{ env.WEBAPP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}  
