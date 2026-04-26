@@ -41,4 +41,5 @@ async def get_product_details(product_id: str):
         "description": data.get("shortDescription"),
         "price": float(data.get("price", {}).get("value", 0.0)),
         "image_url": data.get("image", {}).get("imageUrl"),
+        "additional_images": [img.get("imageUrl") for img in data.get("additionalImages", [])]
     }

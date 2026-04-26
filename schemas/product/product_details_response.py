@@ -9,5 +9,6 @@ class ProductDetailsResponse(BaseModel):
     description: str
     price: float
     image_url: Optional[str] = None
+    additional_images: Optional[list[str]] = None
 
     model_config = ConfigDict(from_attributes=True)

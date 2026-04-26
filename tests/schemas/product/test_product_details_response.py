@@ -16,7 +16,8 @@ def make_product_data(**overrides):
         "title": "Wireless Headphones",
         "description": "High quality wireless headphones with ANC.",
         "price": 99.99,
-        "image_url": "https://example.com/img.jpg"
+        "image_url": "https://example.com/img.jpg",
+        "additional_images": ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
     }
     data.update(overrides)
     return data
@@ -36,6 +37,7 @@ class TestProductDetailsResponseValidData:
         assert data.description == "High quality wireless headphones with ANC."
         assert data.price == 99.99
         assert data.image_url == "https://example.com/img.jpg"
+        assert data.additional_images == ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
 
     def test_image_url_defaults_to_none(self):
         """image_url defaults to None when not provided."""
@@ -48,6 +50,13 @@ class TestProductDetailsResponseValidData:
         del product_data["image_url"]
         data = ProductDetailsResponse(**product_data)
         assert data.image_url is None
+
+    def test_valid_without_additional_images(self):
+        """ProductDetailsResponse is valid without additional_images."""
+        product_data = make_product_data()
+        del product_data["additional_images"]
+        data = ProductDetailsResponse(**product_data)
+        assert data.additional_images is None
 
     def test_price_coerces_int_to_float(self):
         """Integer price is coerced to float."""
@@ -134,10 +143,12 @@ class TestProductDetailsResponseOrmMapping:
         mock_product.description = "Great headphones."
         mock_product.price = 99.99
         mock_product.image_url = "https://example.com/img.jpg"
+        mock_product.additional_images = ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
 
         data = ProductDetailsResponse.model_validate(mock_product)
         assert data.id == "v1|123456|0"
         assert data.description == "Great headphones."
+        assert data.additional_images == ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
 
     def test_from_orm_with_none_image_url(self):
         """Maps correctly when image_url is None."""
@@ -147,9 +158,11 @@ class TestProductDetailsResponseOrmMapping:
         mock_product.description = "Great headphones."
         mock_product.price = 99.99
         mock_product.image_url = None
+        mock_product.additional_images = None
 
         data = ProductDetailsResponse.model_validate(mock_product)
         assert data.image_url is None
+        assert data.additional_images is None
 
 
 # ==============================================================================

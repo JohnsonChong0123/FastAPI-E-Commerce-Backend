@@ -13,7 +13,11 @@ MOCK_EBAY_ITEM = {
     "title": "Wireless Headphones",
     "shortDescription": "High quality wireless headphones with ANC.",
     "price": {"value": "99.99", "currency": "USD"},
-    "image": {"imageUrl": "https://example.com/img.jpg"}
+    "image": {"imageUrl": "https://example.com/img.jpg"},
+    "additionalImages": [
+        {"imageUrl": "https://example.com/img1.jpg"},
+        {"imageUrl": "https://example.com/img2.jpg"}
+    ]
 }
 
 
@@ -22,14 +26,16 @@ def make_item(
     title="Wireless Headphones",
     price="99.99",
     marketing_price=None,
-    image_url="https://example.com/image.jpg"
+    image_url="https://example.com/image.jpg",
+    additional_images=["https://example.com/add1.jpg", "https://example.com/add2.jpg"]
 ):
     """Helper to build a mock eBay item."""
     item = {
         "itemId": item_id,
         "title": title,
         "price": {"value": price},
-        "image": {"imageUrl": image_url}
+        "image": {"imageUrl": image_url},
+        "additionalImages": [{"imageUrl": url} for url in additional_images]
     }
     if marketing_price:
         item["marketingPrice"] = {
@@ -362,6 +368,17 @@ class TestGetProductDetailsFieldParsing:
             mock_fetch.return_value = MOCK_EBAY_ITEM
             result = await get_product_details("v1|123456|0")
             assert result["image_url"] == "https://example.com/img.jpg"
+            
+    @pytest.mark.asyncio
+    async def test_additional_images_parsed_correctly(self):
+        """additionalImages list is parsed to additional_images field."""
+        with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_ITEM
+            result = await get_product_details("v1|123456|0")
+            assert result["additional_images"] == [
+                "https://example.com/img1.jpg",
+                "https://example.com/img2.jpg"
+            ]
 
 
 # ==============================================================================
