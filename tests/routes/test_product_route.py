@@ -23,12 +23,19 @@ MOCK_PRODUCTS = [
     }
 ]
 
+# ✅ price is now a nested Price object
 MOCK_PRODUCT_DETAILS = {
     "id": "v1|123456|0",
     "title": "Wireless Headphones",
     "description": "High quality wireless headphones with ANC.",
-    "price": 99.99,
-    "image_url": "https://example.com/img.jpg"
+    "price": {"value": 99.99, "currency": "USD"},
+    "image_url": "https://example.com/img.jpg",
+    "additional_images": [
+        "https://example.com/img1.jpg",
+        "https://example.com/img2.jpg"
+    ],
+    "localized_aspects": [],
+    "shipping_options": []
 }
 
 
@@ -133,7 +140,8 @@ class TestListProductsRoute:
             body = str(response.json())
             assert "traceback" not in body.lower()
             assert "exception" not in body.lower()
-            
+
+
 class TestGetProductDetailsRoute:
 
     # -------------------------------------------------------------------------
@@ -172,7 +180,20 @@ class TestGetProductDetailsRoute:
             assert body["title"] == "Wireless Headphones"
             assert body["description"] == \
                 "High quality wireless headphones with ANC."
-            assert body["price"] == 99.99
+            # ✅ price is now a nested object
+            assert body["price"]["value"] == 99.99
+            assert body["price"]["currency"] == "USD"
+
+    @pytest.mark.asyncio
+    async def test_price_is_nested_object(self, client):
+        """price field in response is a nested object with value and currency."""
+        with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_PRODUCT_DETAILS
+            response = client.get("/product/v1|123456|0")
+            price = response.json()["price"]
+            assert "value" in price
+            assert "currency" in price
+            assert price["value"] == 99.99
 
     @pytest.mark.asyncio
     async def test_image_url_can_be_none(self, client):
@@ -185,6 +206,33 @@ class TestGetProductDetailsRoute:
             response = client.get("/product/v1|123456|0")
             assert response.status_code == 200
             assert response.json()["image_url"] is None
+
+    @pytest.mark.asyncio
+    async def test_additional_images_in_response(self, client):
+        """Response contains additional_images list."""
+        with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_PRODUCT_DETAILS
+            response = client.get("/product/v1|123456|0")
+            assert "additional_images" in response.json()
+            assert len(response.json()["additional_images"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_shipping_options_in_response(self, client):
+        """Response contains shipping_options list."""
+        with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_PRODUCT_DETAILS
+            response = client.get("/product/v1|123456|0")
+            assert "shipping_options" in response.json()
+            assert isinstance(response.json()["shipping_options"], list)
+
+    @pytest.mark.asyncio
+    async def test_localized_aspects_in_response(self, client):
+        """Response contains localized_aspects list."""
+        with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = MOCK_PRODUCT_DETAILS
+            response = client.get("/product/v1|123456|0")
+            assert "localized_aspects" in response.json()
+            assert isinstance(response.json()["localized_aspects"], list)
 
     @pytest.mark.asyncio
     async def test_product_id_passed_correctly_to_service(self, client):
@@ -219,10 +267,7 @@ class TestGetProductDetailsRoute:
         """Endpoint does not require authorization header."""
         with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
             mock_get.return_value = MOCK_PRODUCT_DETAILS
-            response = client.get(
-                "/product/v1|123456|0"
-                # no Authorization header
-            )
+            response = client.get("/product/v1|123456|0")
             assert response.status_code == 200
 
     # -------------------------------------------------------------------------
@@ -230,7 +275,7 @@ class TestGetProductDetailsRoute:
     # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_product_not_found_returns_503(self, client):
+    async def test_product_not_found_returns_502(self, client):
         """ExternalAPIError returns 502 via exception handler."""
         with patch(PRODUCT_DETAILS_PATCH_PATH, new_callable=AsyncMock) as mock_get:
             mock_get.side_effect = ExternalAPIError()
