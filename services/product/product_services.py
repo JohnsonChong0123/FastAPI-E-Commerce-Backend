@@ -35,11 +35,17 @@ async def get_product_details(product_id: str):
     if not data:
         raise ExternalAPIError()
     
+    price_obj = data.get("price", {}) or {}
+    price_value = float(price_obj.get("value", 0.0))
+    price_currency = price_obj.get("currency")
+    
     return {
         "id": data.get("itemId"),
         "title": data.get("title"),
         "description": data.get("shortDescription"),
-        "price": float(data.get("price", {}).get("value", 0.0)),
+        "price": {"value": price_value, "currency": price_currency},
         "image_url": data.get("image", {}).get("imageUrl"),
-        "additional_images": [img.get("imageUrl") for img in data.get("additionalImages", [])]
+        "additional_images": [img.get("imageUrl") for img in data.get("additionalImages", [])],
+        "localized_aspects": data.get("localizedAspects", []),
+        "shipping_options": data.get("shippingOptions", []),
     }

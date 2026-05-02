@@ -358,8 +358,9 @@ class TestGetProductDetailsFieldParsing:
         with patch(SINGLE_PRODUCT_PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = MOCK_EBAY_ITEM
             result = await get_product_details("v1|123456|0")
-            assert result["price"] == 99.99
-            assert isinstance(result["price"], float)
+            assert result["price"]["value"] == 99.99
+            assert result["price"]["currency"] == "USD"
+            assert isinstance(result["price"]["value"], float)
 
     @pytest.mark.asyncio
     async def test_image_url_parsed_correctly(self):
@@ -411,7 +412,8 @@ class TestGetProductDetailsMissingFields:
                 # no price
             }
             result = await get_product_details("v1|123456|0")
-            assert result["price"] == 0.0
+            assert result["price"]["value"] == 0.0
+            assert result["price"]["currency"] is None
 
     @pytest.mark.asyncio
     async def test_missing_image_defaults_to_none(self):
