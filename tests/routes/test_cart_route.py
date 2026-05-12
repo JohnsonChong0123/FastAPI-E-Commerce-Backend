@@ -11,6 +11,7 @@ import uuid
 
 ADD_PATCH_PATH = "routes.cart_route.cart_services.add_to_cart"
 GET_PATCH_PATH = "routes.cart_route.cart_services.get_cart"
+UPDATE_PATCH_PATH = "routes.cart_route.cart_services.update_cart"
 
 VALID_PAYLOAD = {
     "product_id": "v1|123456|0",
@@ -92,6 +93,37 @@ class TestAddToCartRoute:
             assert mock_add.called
             call_kwargs = mock_add.call_args
             payload_arg = call_kwargs[0][2]   # third positional arg
+            assert payload_arg.product_id == "v1|123456|0"
+            assert payload_arg.quantity == 1
+
+
+class TestUpdateCartRoute:
+
+    @pytest.mark.asyncio
+    async def test_update_returns_200(self, client, registered_user):
+        with patch(UPDATE_PATCH_PATH, new_callable=AsyncMock) as mock_update:
+            mock_update.return_value = {"message": "Cart updated successfully"}
+            response = client.put(
+                "/cart/update",
+                json=VALID_PAYLOAD,
+                headers=auth_header(registered_user.id)
+            )
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_service_called_with_correct_payload_on_update(
+        self, client, registered_user
+    ):
+        with patch(UPDATE_PATCH_PATH, new_callable=AsyncMock) as mock_update:
+            mock_update.return_value = {"message": "Cart updated successfully"}
+            client.put(
+                "/cart/update",
+                json=VALID_PAYLOAD,
+                headers=auth_header(registered_user.id)
+            )
+            assert mock_update.called
+            call_kwargs = mock_update.call_args
+            payload_arg = call_kwargs[0][2]
             assert payload_arg.product_id == "v1|123456|0"
             assert payload_arg.quantity == 1
 

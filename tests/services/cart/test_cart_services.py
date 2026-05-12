@@ -6,7 +6,7 @@ from models.cart_model import Cart
 from models.cart_item_model import CartItem
 from models.user_model import User
 from core.security import hash_password
-from services.cart.cart_services import add_to_cart, get_cart, remove_cart_item
+from services.cart.cart_services import add_to_cart, get_cart, remove_cart_item, update_cart
 from schemas.cart.cart_create import CartItemCreate
 from sqlalchemy import select
 from exceptions.cart_exceptions import CartNotFoundError, CartItemNotFoundError
@@ -132,6 +132,50 @@ class TestAddToCartProductNotFound:
             count = db_session.query(CartItem).count()
             assert count == 0
 
+
+class TestUpdateCartService:
+
+    @pytest.mark.asyncio
+    async def test_update_changes_quantity(
+        self, db_session, registered_user, cart_with_item
+    ):
+        new_qty = 5
+        payload = valid_payload = CartItemCreate(
+            product_id="v1|123456|0",
+            quantity=new_qty
+        )
+
+        await update_cart(db_session, registered_user, payload)
+
+        item = db_session.execute(
+            select(CartItem).where(
+                CartItem.cart_id == cart_with_item.id,
+                CartItem.product_id == payload.product_id
+            )
+        ).scalar_one()
+
+        assert item.quantity == new_qty
+
+    @pytest.mark.asyncio
+    async def test_update_reflects_in_get_cart_total(
+        self, db_session, registered_user, cart_with_item
+    ):
+        # patch external product fetch to provide a known price
+        with patch(PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
+            mock_fetch.return_value = MOCK_EBAY_PRODUCT
+
+            new_qty = 3
+            payload = CartItemCreate(
+                product_id="v1|123456|0",
+                quantity=new_qty
+            )
+
+            await update_cart(db_session, registered_user, payload)
+
+            result = await get_cart(db_session, registered_user)
+
+            expected_total = float(MOCK_EBAY_PRODUCT["price"]["value"]) * new_qty
+            assert result["cart_total"] == expected_total
 
 # ==============================================================================
 # Cart Creation Tests

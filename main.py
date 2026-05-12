@@ -6,6 +6,10 @@ from database import engine
 
 app = FastAPI()
 
+@app.get("/test")
+def test():
+    return {"ok": True}
+
 register_exceptions(app)
 
 app.include_router(auth_route.router, prefix="/auth")

@@ -31,6 +31,25 @@ async def add_to_cart(
             detail=str(e)
         )
         
+
+@router.put("/update")
+async def update_cart(
+    payload: CartItemCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        result = await cart_services.update_cart(db, user, payload)
+        db.commit()
+        return result
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+        
 @router.get("", response_model=CartResponse)
 async def get_cart(
     db: Session = Depends(get_db),

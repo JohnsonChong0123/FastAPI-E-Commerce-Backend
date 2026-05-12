@@ -95,6 +95,30 @@ async def get_cart(db, user):
         "cart_total": cart_total
     }
     
+
+async def update_cart(db, user, payload):
+    """Update the quantity for a cart item."""
+    cart = db.execute(
+        select(Cart).where(Cart.user_id == user.id)
+    ).scalar_one_or_none()
+
+    if not cart:
+        raise CartNotFoundError()
+
+    cart_item = db.execute(
+        select(CartItem).where(
+            CartItem.cart_id == cart.id,
+            CartItem.product_id == payload.product_id
+        )
+    ).scalar_one_or_none()
+
+    if not cart_item:
+        raise CartItemNotFoundError()
+
+    cart_item.quantity = payload.quantity
+
+    return {"message": "Cart updated successfully"}
+    
     
 def remove_cart_item(db, user, product_id):
 

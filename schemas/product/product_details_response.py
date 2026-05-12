@@ -20,7 +20,6 @@ class ShippingOption(BaseModel):
     shippingServiceCode: Optional[str] = None
     type: Optional[str] = None
     shippingCost: Optional[ShippingCost] = None
-    quantityUsedForEstimate: Optional[int] = None
     additionalShippingCostPerUnit: Optional[ShippingCost] = None
     shippingCostType: Optional[str] = None
 
