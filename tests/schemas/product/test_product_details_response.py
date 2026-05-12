@@ -28,7 +28,6 @@ def make_shipping_option(**overrides):
         "shippingServiceCode": "UPS_GROUND",
         "type": "FIXED",
         "shippingCost": {"value": 5.99, "currency": "USD"},
-        "quantityUsedForEstimate": 1,
         "additionalShippingCostPerUnit": {"value": 1.00, "currency": "USD"},
         "shippingCostType": "FLAT_RATE"
     }
@@ -142,7 +141,6 @@ class TestShippingOptionModel:
         assert option.shippingServiceCode == "UPS_GROUND"
         assert option.type == "FIXED"
         assert option.shippingCost.value == 5.99
-        assert option.quantityUsedForEstimate == 1
 
     def test_all_fields_optional(self):
         """ShippingOption with no fields is valid."""
@@ -150,7 +148,6 @@ class TestShippingOptionModel:
         assert option.shippingServiceCode is None
         assert option.type is None
         assert option.shippingCost is None
-        assert option.quantityUsedForEstimate is None
         assert option.additionalShippingCostPerUnit is None
         assert option.shippingCostType is None
 
