@@ -59,6 +59,7 @@ jobs:
         GOOGLE_CLIENT_ID: test_client_id
         EBAY_CLIENT_ID: test_ebay_id
         EBAY_CLIENT_SECRET: test_ebay_secret
+        IOS_GOOGLE_ID: test_ios_google_id
       run: |
         pytest --cov=. --cov-report=xml --cov-report=term -v
     
