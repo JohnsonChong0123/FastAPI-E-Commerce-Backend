@@ -86,7 +86,8 @@ async def get_cart(db, user):
             "name": product.get("title"),
             "price": price,
             "quantity": item.quantity,
-            "image_url": product.get("image", {}).get("imageUrl")
+            "image_url": product.get("image", {}).get("imageUrl"),
+            "shipping_options": product.get("shippingOptions", [])
         })
 
     return {

@@ -78,7 +78,7 @@ class TestVerifyGoogleToken:
             mock_verify.return_value = MOCK_GOOGLE_USER_INFO
             verify_google_token("some.token")
             call_args = mock_verify.call_args
-            assert call_args[0][2] == settings.GOOGLE_CLIENT_ID
+            assert call_args[0][2] == [settings.GOOGLE_CLIENT_ID, settings.IOS_GOOGLE_ID]
 
     def test_empty_token_returns_none(self):
         """Empty token string returns None."""

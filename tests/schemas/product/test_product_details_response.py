@@ -6,9 +6,9 @@ from schemas.product.product_details_response import (
     ProductDetailsResponse,
     Price,
     ShippingOption,
-    ShippingCost,
     LocalizedAspect,
 )
+from schemas.shipping import ShippingCost, ShippingOption
 
 
 # ==============================================================================
