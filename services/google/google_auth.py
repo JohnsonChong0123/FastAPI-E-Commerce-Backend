@@ -9,9 +9,10 @@ def verify_google_token(token: str):
         idinfo = id_token.verify_oauth2_token(
             token,
             requests.Request(),
-            settings.GOOGLE_CLIENT_ID
+            [settings.GOOGLE_CLIENT_ID, settings.IOS_GOOGLE_ID]
         )
         return idinfo
 
-    except (ValueError, Exception):
+    except (ValueError, Exception) as e:
+        print(f"Exception: {e}")
         return None

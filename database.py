@@ -4,7 +4,9 @@ from core.config import settings
 
 DATABASE_URL = settings.DATABASE_URL
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, 
+                       pool_size=2
+                       )
 
 SessionLocal = sessionmaker(
     autocommit=False,

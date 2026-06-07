@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     
     # google oauth
     GOOGLE_CLIENT_ID: str
+    IOS_GOOGLE_ID: str
     
     # ebay api
     EBAY_CLIENT_ID: str

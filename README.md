@@ -190,6 +190,7 @@ TOKEN_SECRET_KEY=your_token_secret_key
 GOOGLE_CLIENT_ID=your_google_client_id
 EBAY_CLIENT_ID=your_ebay_client_id
 EBAY_CLIENT_SECRET=your_ebay_client_secret
+IOS_GOOGLE_ID=your_ios_google_id
 ```
 ---
 

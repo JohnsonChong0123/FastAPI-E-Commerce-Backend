@@ -141,6 +141,11 @@ jobs:
               "name": "WEBSITES_PORT",
               "value": "8000",
               "slotSetting": false
+            },
+            {
+              "name": "IOS_GOOGLE_ID",
+              "value": "${{ secrets.IOS_GOOGLE_ID }}",
+              "slotSetting": false
             }
           ]
     
