@@ -48,6 +48,7 @@ def make_product_data(**overrides):
         "id": "v1|123456|0",
         "title": "Wireless Headphones",
         "description": "High quality wireless headphones with ANC.",
+        "original_price": None,
         "price": make_price(),
         "image_url": "https://example.com/img.jpg",
         "additional_images": [
@@ -353,6 +354,7 @@ class TestProductDetailsResponseOrmMapping:
         mock_product.id = "v1|123456|0"
         mock_product.title = "Wireless Headphones"
         mock_product.description = "Great headphones."
+        mock_product.original_price = None
         mock_product.price = Price(value=99.99, currency="USD")
         mock_product.image_url = "https://example.com/img.jpg"
         mock_product.additional_images = None
@@ -370,6 +372,7 @@ class TestProductDetailsResponseOrmMapping:
         mock_product.id = "v1|123456|0"
         mock_product.title = "Wireless Headphones"
         mock_product.description = "Great headphones."
+        mock_product.original_price = None
         mock_product.price = Price(value=99.99, currency="USD")
         mock_product.image_url = None
         mock_product.additional_images = None
@@ -393,17 +396,3 @@ class TestProductDetailsVsSummary:
         del product_data["description"]
         with pytest.raises(ValidationError):
             ProductDetailsResponse(**product_data)
-
-    def test_no_original_price_field(self):
-        """ProductDetailsResponse has no original_price field."""
-        data = ProductDetailsResponse(**make_product_data())
-        assert not hasattr(data, "original_price")
-
-    def test_price_is_object_not_float(self):
-        """
-        Key difference: ProductDetailsResponse.price is a Price object
-        whereas ProductSummaryResponse.price is a plain float.
-        """
-        data = ProductDetailsResponse(**make_product_data())
-        assert isinstance(data.price, Price)
-        assert not isinstance(data.price, float)

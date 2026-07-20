@@ -2,6 +2,7 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_serializer
 
+from schemas.product.price_response import Price
 from schemas.shipping import ShippingOption
 
 # class ShippingCost(BaseModel):
@@ -13,9 +14,9 @@ from schemas.shipping import ShippingOption
 #         d = Decimal(str(v)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 #         return float(d)
     
-class Price(BaseModel):
-    value: float
-    currency: Optional[str] = None
+# class Price(BaseModel):
+#     value: float
+#     currency: Optional[str] = None
 
 # class ShippingOption(BaseModel):
 #     shippingServiceCode: Optional[str] = None
@@ -33,6 +34,7 @@ class ProductDetailsResponse(BaseModel):
     id: str
     title: str
     description: str
+    original_price: Optional[Price] = None
     price: Price
     image_url: Optional[str] = None
     additional_images: Optional[list[str]] = None

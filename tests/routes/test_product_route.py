@@ -10,14 +10,14 @@ MOCK_PRODUCTS = [
     {
         "id": "item-001",
         "title": "Wireless Headphones",
-        "price": 99.99,
-        "original_price": 149.99,
+        "price": {"value": 99.99, "currency": "USD"},
+        "original_price": {"value": 149.99, "currency": "USD"},
         "image_url": "https://example.com/img1.jpg"
     },
     {
         "id": "item-002",
         "title": "Bluetooth Speaker",
-        "price": 49.99,
+        "price": {"value": 49.99, "currency": "USD"},
         "original_price": None,
         "image_url": "https://example.com/img2.jpg"
     }
@@ -91,7 +91,7 @@ class TestListProductsRoute:
             first = response.json()[0]
             assert first["id"] == "item-001"
             assert first["title"] == "Wireless Headphones"
-            assert first["price"] == 99.99
+            assert first["price"]["value"] == 99.99
 
     @pytest.mark.asyncio
     async def test_list_products_optional_fields_nullable(self, client):

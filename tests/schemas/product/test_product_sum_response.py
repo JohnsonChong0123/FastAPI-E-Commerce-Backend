@@ -3,6 +3,7 @@ import uuid
 import pytest
 from unittest.mock import MagicMock
 from pydantic import ValidationError
+from schemas.product.price_response import Price
 from schemas.product.product_sum_response import ProductSummaryResponse
 
 
@@ -17,23 +18,23 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=99.99,
-            original_price=149.99,
+            price=Price(value=99.99, currency="USD"),
+            original_price=Price(value=149.99, currency="USD"),
             image_url="https://example.com/image.jpg"
         )
         assert data.title == "Wireless Headphones"
-        assert data.price == 99.99
-        assert data.original_price == 149.99
+        assert data.price.value == 99.99
+        assert data.original_price.value == 149.99
 
     def test_valid_minimal_data(self):
         """Only required fields should pass."""
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=99.99
+            price=Price(value=99.99, currency="USD")
         )
         assert data.title == "Wireless Headphones"
-        assert data.price == 99.99
+        assert data.price.value == 99.99
 
     # -------------------------------------------------------------------------
     # Optional Fields Tests
@@ -44,7 +45,7 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=99.99
+            price=Price(value=99.99, currency="USD")
         )
         assert data.original_price is None
 
@@ -53,7 +54,7 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=99.99
+            price=Price(value=99.99, currency="USD")
         )
         assert data.image_url is None
 
@@ -66,7 +67,7 @@ class TestProductSummaryResponse:
         with pytest.raises(ValidationError):
             ProductSummaryResponse(
                 title="Wireless Headphones",
-                price=99.99
+                price=Price(value=99.99, currency="USD")
             )
 
     def test_missing_title_raises_error(self):
@@ -74,7 +75,7 @@ class TestProductSummaryResponse:
         with pytest.raises(ValidationError):
             ProductSummaryResponse(
                 id=str(uuid.uuid4()),
-                price=99.99
+                price=Price(value=99.99, currency="USD")
             )
 
     def test_missing_price_raises_error(self):
@@ -103,10 +104,10 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=100
+            price=Price(value=100, currency="USD")
         )
-        assert isinstance(data.price, float)
-        assert data.price == 100.0
+        assert isinstance(data.price.value, float)
+        assert data.price.value == 100.0
 
     def test_original_price_must_be_numeric(self):
         """Non-numeric original_price raises ValidationError."""
@@ -114,7 +115,7 @@ class TestProductSummaryResponse:
             ProductSummaryResponse(
                 id=str(uuid.uuid4()),
                 title="Wireless Headphones",
-                price=99.99,
+                price=Price(value=99.99, currency="USD"),
                 original_price="not-a-price"
             )
 
@@ -123,9 +124,9 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Free Item",
-            price=0.0
+            price=Price(value=0.0, currency="USD")
         )
-        assert data.price == 0.0
+        assert data.price.value == 0.0
 
     def test_negative_price_is_accepted(self):
         """
@@ -135,9 +136,9 @@ class TestProductSummaryResponse:
         data = ProductSummaryResponse(
             id=str(uuid.uuid4()),
             title="Wireless Headphones",
-            price=-10.0
+            price=Price(value=-10.0, currency="USD")
         )
-        assert data.price == -10.0
+        assert data.price.value == -10.0
 
     # -------------------------------------------------------------------------
     # ORM Mapping Tests
@@ -148,20 +149,20 @@ class TestProductSummaryResponse:
         mock_product = MagicMock()
         mock_product.id = str(uuid.uuid4())
         mock_product.title = "Wireless Headphones"
-        mock_product.price = 99.99
-        mock_product.original_price = 149.99
+        mock_product.price = Price(value=99.99, currency="USD")
+        mock_product.original_price = Price(value=149.99, currency="USD")
         mock_product.image_url = "https://example.com/image.jpg"
 
         data = ProductSummaryResponse.model_validate(mock_product)
         assert data.title == "Wireless Headphones"
-        assert data.price == 99.99
+        assert data.price.value == 99.99
 
     def test_from_orm_object_with_optional_none(self):
         """ORM object with None optional fields maps correctly."""
         mock_product = MagicMock()
         mock_product.id = str(uuid.uuid4())
         mock_product.title = "Wireless Headphones"
-        mock_product.price = 99.99
+        mock_product.price = Price(value=99.99, currency="USD")
         mock_product.original_price = None
         mock_product.image_url = None
 

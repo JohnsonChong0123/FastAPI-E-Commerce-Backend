@@ -24,7 +24,7 @@ MOCK_EBAY_ITEM = {
 def make_item(
     item_id="item-123",
     title="Wireless Headphones",
-    price="99.99",
+    price={"value": "99.99", "currency": "USD"},
     marketing_price=None,
     image_url="https://example.com/image.jpg",
     additional_images=["https://example.com/add1.jpg", "https://example.com/add2.jpg"]
@@ -33,13 +33,13 @@ def make_item(
     item = {
         "itemId": item_id,
         "title": title,
-        "price": {"value": price},
+        "price": {"value": price["value"], "currency": price["currency"]},
         "image": {"imageUrl": image_url},
         "additionalImages": [{"imageUrl": url} for url in additional_images]
     }
     if marketing_price:
         item["marketingPrice"] = {
-            "originalPrice": {"value": marketing_price}
+            "originalPrice": {"value": marketing_price["value"], "currency": marketing_price["currency"]}
         }
     return item
 
@@ -149,11 +149,11 @@ class TestGetProductsFieldParsing:
         """price value is parsed as float."""
         with patch(PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = {
-                "itemSummaries": [make_item(price="99.99")]
+                "itemSummaries": [make_item(price={"value": "99.99", "currency": "USD"})]
             }
             result = await get_products()
-            assert result[0]["price"] == 99.99
-            assert isinstance(result[0]["price"], float)
+            assert result[0]["price"]["value"] == 99.99
+            assert isinstance(result[0]["price"]["value"], float)
 
     @pytest.mark.asyncio
     async def test_image_url_parsed_correctly(self):
@@ -173,11 +173,11 @@ class TestGetProductsFieldParsing:
         with patch(PATCH_PATH, new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = {
                 "itemSummaries": [
-                    make_item(price="99.99", marketing_price="149.99")
+                    make_item(price={"value": "99.99", "currency": "USD"}, marketing_price={"value": 149.99, "currency": "USD"})
                 ]
             }
             result = await get_products()
-            assert result[0]["original_price"] == 149.99
+            assert result[0]["original_price"]["value"] == 149.99
 
     @pytest.mark.asyncio
     async def test_original_price_none_when_no_marketing(self):
@@ -208,7 +208,7 @@ class TestGetProductsMissingFields:
                 }]
             }
             result = await get_products()
-            assert result[0]["price"] == 0.0
+            assert result[0]["price"]["value"] == 0.0
 
     @pytest.mark.asyncio
     async def test_missing_image_url_defaults_to_none(self):
@@ -255,7 +255,7 @@ class TestGetProductsMissingFields:
                 }]
             }
             result = await get_products()
-            assert result[0]["original_price"] == 0.0   # ← documents bug
+            assert result[0]["original_price"]["value"] == 0.0   # ← documents bug
         
 # ==============================================================================
 # ExternalAPIError Tests
